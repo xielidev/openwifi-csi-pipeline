@@ -1,0 +1,23 @@
+# kernel build artifacts
+*.ko
+*.o
+*.mod
+*.mod.c
+*.mod.o
+*.order
+*.symvers
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+
+# userspace build artifacts
+user_space/csi_bench
+*.log
+*.json
+*.png
+__pycache__/
+
+# editor / OS
+*.swp
+.DS_Store
