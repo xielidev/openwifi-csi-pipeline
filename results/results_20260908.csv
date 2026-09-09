@@ -1,4 +1,6 @@
 run,path,duration_s,num_eq,total_frames,frame_rate_hz,cpu_percent,loss_percent,tsf_loss_est_percent,jitter_p50_us,jitter_p95_us,dma_err_count,notes
 baseline_v2,side_ch(netlink)->UDP,60.00,8,68170,1128.2,15.23,0.00,46.84,464,2028,,cpu%=15.23 measured after fixing run_baseline.py /proc stat timing bug (tsf-est artifact at>12Mbit/s)
 raw,side_ch(netlink)->UDP+rawdump,60.18,8,29987,498.3,,0.00,71.17,580,4066,,raw01.bin du 113.7MB
-mmap,csi_dma zero-copy(mmap),60.01,8,11142,185.7,0.62,0.00,100.00,2028,8840,1,tsf-est=100% is stat artifact from a single long stall (1 dma_error)
+mmap,csi_dma zero-copy(mmap),60.01,8,11142,185.7,0.62,0.00,100.00,2028,8840,1,tsf-est=100% is stat artifact from a single long stall (1 dma_error); superseded by mmap_37khz below
+mmap_37khz,csi_dma zero-copy(mmap),60.00,8,58453,974.2,3.37,0.00,79.59,736,2019,0,same +37kHz CFO & ~12M uplink as baseline_v2 (fair comparison); jitter mean/std skewed by occasional stall
+mmap_cdf,csi_dma zero-copy(mmap)+interval,60.01,8,83993,1399.7,5.79,0.00,100.00,580,931,0,re-measured 2026-09-09 to regenerate CDF interval sequence (mmap_intervals.txt); higher fps due to larger iperf uplink

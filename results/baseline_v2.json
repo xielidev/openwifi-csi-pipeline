@@ -1,0 +1,17 @@
+{
+  "mode": "baseline",
+  "duration_s": 60.0,
+  "num_eq": 8,
+  "total_frames": 68170,
+  "frame_rate_hz": 1128.2,
+  "cpu_percent": 15.23,
+  "loss_percent": -9301.58,
+  "tsf_loss_est_percent": 46.84,
+  "jitter_us": {
+    "mean": 871.8,
+    "std": 3548.6,
+    "p50": 464,
+    "p95": 2028
+  },
+  "note": "frame rate/jitter/loss from UDP receiver; CPU% of side_ch_ctl"
+}

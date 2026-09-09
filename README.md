@@ -99,34 +99,74 @@ reproducible methodology and the meaning of the three headline metrics
 
 ## Benchmark results
 
-Measurements captured on the board (2026-09-08) over 60 s each, `num_eq=8`,
-under a fixed uplink `iperf3` stream from a Redmi client (UDP → 5201). Raw data
-in [`results/`](results/).
+Measurements captured on the board (2026-09-09) over 60 s each, `num_eq=8`,
+under a fixed uplink `iperf3` stream from a Redmi client (UDP → 5201), on the
+same 2.4 GHz AP, channel 6, with the +37 kHz CFO offset applied identically to
+both runs so the numbers are directly comparable. Raw data in
+[`results/`](results/).
 
-| Metric | ① Official Baseline<br>(side_ch → UDP) | ③ Raw CSI capture<br>(side_ch → UDP+dump) | ② mmap zero-copy<br>(csi_dma) |
-|---|---|---|---|
-| Capture path | netlink → copy → UDP | netlink → copy → UDP+dump | **DMA + mmap, no CPU copy** |
-| Frame rate (fps) | 1128.2 | 498.3 | 185.7 |
-| Total frames | 68,170 | 29,987 | 11,142 |
-| CPU% | 15.23 | — | 0.62 |
-| Loss (explicit) | 0.00% | 0.00% | 0.00% |
-| Loss (TSF-est) | 46.84%* | 71.17% | 100%† |
-| TSF jitter p50 | 464 µs | 580 µs | 2,028 µs |
-| TSF jitter p95 | 2,028 µs | 4,066 µs | 8,840 µs |
-| DMA errors | — | — | 1 |
+| Metric | ① Official Baseline<br>(side_ch → UDP) | ② mmap zero-copy<br>(csi_dma) |
+|---|---|---|
+| Capture path | netlink → copy → UDP | **DMA + mmap, no CPU copy** |
+| Frame rate (fps) | 1128.2 | 974.2 |
+| Total frames | 68,170 | 58,453 |
+| CPU% | 15.23 | **3.37** |
+| Loss (explicit) | 0.00% | 0.00% |
+| Loss (TSF-est) | 46.84%* | 79.59%† |
+| TSF jitter p50 | 464 µs | 736 µs |
+| TSF jitter p95 | 2,028 µs | 2,019 µs |
+| DMA errors | — | 0 |
 
-CSV: [`results/results_20260908.csv`](results/results_20260908.csv)
+CSV: [`results/results_20260908.csv`](results/results_20260908.csv) ·
+Baseline data: [`results/baseline_v2.json`](results/baseline_v2.json)
 
-_*_ baseline row re-measured (2026-09-09) after fixing the `run_baseline.py`
-/proc-stat sampling bug that previously reported a bogus 0.00% CPU; true
-`side_ch_ctl` CPU is **15.23%**. TSF-est at ~12 Mbit/s uplink is a single-stall
+_*_ baseline `TSF-est` at ~12 Mbit/s uplink is a single-stall statistics
 artifact, not a real loss (explicit 0.00%).
-_†_ mmap TSF-est 100% is a statistics artifact: one long stall (the single DMA
-error) skews mean/std; the p50/p95 values are the valid numbers.
+_†_ mmap `TSF-est` is the same kind of artifact: an occasional long inter-frame
+stall skews the mean/std estimate; explicit loss is 0.00% and DMA errors = 0.
 
-Takeaway: the zero-copy mmap path drops process CPU to 0.62% (vs **15.23%** for the
-netlink/copy baseline), at the cost of somewhat higher scheduling/phase jitter
-(p50 2,028 µs vs 464 µs).
+Takeaway: with the same +37 kHz CFO, same client and same ~12 Mbit/s uplink,
+the zero-copy mmap path delivers near-identical throughput (974 vs 1128 fps,
+-14%) and essentially the same jitter (p50 736 vs 464 µs, p95 ≈ equal) while
+dropping capture-process CPU from **15.23% → 3.37%** (~4.5× reduction, no copy
+and no per-transfer DMA map/unmap). The captured process CPU/P95 values reflect
+only the capture path; a small per-frame headroom trade-off is visible on p50.
+
+Figures (generated from the raw data with the chart code used by
+[`scripts/plot_compare.py`](scripts/plot_compare.py)):
+
+- CPU: capture-process CPU usage, baseline vs mmap
+  ![CPU comparison](docs/figures/cpu_percent.png)
+- Jitter: CDF of inter-frame TSF intervals, baseline vs mmap
+  ![Jitter CDF](docs/figures/jitter_cdf.png)
+
+The CDF is an empirical CDF of the full inter-frame TSF delta sequences:
+[`results/board_data/baseline_v2_intervals.txt`](results/board_data/baseline_v2_intervals.txt)
+(`side_ch` netlink path) and
+[`results/board_data/mmap_intervals.txt`](results/board_data/mmap_intervals.txt)
+(`mmap` re-measured 2026-09-09 with the interval dump enabled). The plot canvas
+is truncated at 5 ms to show the body of the distribution; 95%+ of frames in
+both paths fall within it, and the long pauses beyond it are the TSF-est "loss"
+artifacts discussed in the table (no explicit loss was observed).
+
+## Raw CSI data capture
+
+The performance comparison above focuses on *throughput* metrics. For the
+wireless-sensing experiments we also capture the **raw physical CSI matrices**
+themselves (the first batch, 2026-09-08):
+
+- Driver: the same `side_ch` netlink path, run with `side_ch_ctl g1`.
+- Capture: `side_ch_ctl` polls CSI and forwards it over UDP while a raw-dump
+  sink saves each CSI frame's byte payload to disk.
+- Output: `raw01.bin` (113.7 MB of raw CSI matrix bytes) with the stream
+  summary in `raw.json`.
+
+This is the ground-truth channel data used by the downstream sensing pipeline
+(e.g. phase/DSP experiments, activity fingerprints), kept separately from the
+benchmark numbers because it is a *data-collection* step, not a *performance
+measurement* (no CPU%/jitter are attributed to it). It was captured with the
+same `num_eq=8`, same +37 kHz CFO, same client/traffic setup as the benchmarks,
+so the raw data and the per-path stats describe the same RF scenario.
 
 ## CSI frame layout
 

@@ -14,9 +14,15 @@ Module.symvers
 # userspace build artifacts
 user_space/csi_bench
 *.log
+__pycache__/
+
+# data files tracked explicitly in results/ (kept out of general ignore)
+# keep benchmark JSON + figures versioned for reproducibility
 *.json
 *.png
-__pycache__/
+!docs/figures/*.png
+!results/board_data/*.json
+!results/*.json
 
 # editor / OS
 *.swp
