@@ -22,6 +22,7 @@ __pycache__/
 *.png
 !docs/figures/*.png
 !results/board_data/*.json
+!results/board_data/sweep_full_zc/*.json
 !results/*.json
 
 # editor / OS
