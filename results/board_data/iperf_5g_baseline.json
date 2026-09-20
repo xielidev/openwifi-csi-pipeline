@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "date": "2026-09-11",
+    "board": "RK-ZYNQ7020-F (openwifi)",
+    "iface": "sdr0",
+    "band": "5GHz",
+    "channel": 36,
+    "freq_hz": 5180000000,
+    "lo_offset_hz": 78000,
+    "lo_applied": [5180077998, 5180077998],
+    "phy_rate": "65.0 MBit/s (MCS7, HT20)",
+    "signal_dbm": -37,
+    "client": "X230 (84:3a:4b:7c:7e:5e), Win10, Intel Centrino, power_save=off, roaming=lowest",
+    "server": "iperf3 5.15 kernel board, iperf3 -s at 192.168.13.1:5201",
+    "test": "iperf3 -c 192.168.13.1 [-R] -t 60, TCP, 60s per round",
+    "beacon_int": 50,
+    "dtim_period": 1,
+    "notes": "Downlink capped by openwifi_tx per-frame CPU cost; uplink data path is FPGA RX, TCP ACKs consume CPU TX. Uplink TCP retransmits rose across rounds (434/572/815)."
+  },
+  "uplink_x230_to_board": {
+    "unit": "Mbits/sec",
+    "rounds": [23.0, 22.1, 20.6],
+    "mean": 21.9,
+    "std": 1.2,
+    "tcp_retransmits": [434, 572, 815]
+  },
+  "downlink_board_to_x230": {
+    "unit": "Mbits/sec",
+    "rounds": [17.0, 18.2, 17.9, 17.9],
+    "mean": 17.75,
+    "std": 0.5
+  },
+  "ping_baseline_gateway": {
+    "unit": "ms",
+    "avg": 2,
+    "min": 1,
+    "max": 92,
+    "loss_pct": 0
+  }
+}
