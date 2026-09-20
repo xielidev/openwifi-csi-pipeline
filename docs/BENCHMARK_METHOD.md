@@ -88,3 +88,97 @@ ComEX spec (~1500 words + 3 figures): Fig.1 frame rate, Fig.2 CPU%, Fig.3
 jitter exactly cover the three benefits of the zero-copy refactor. The narrative
 is: after removing the kernel copy and keeping the DMA mapped continuously,
 frame rate improves by X%, CPU drops by Y%, and jitter decreases by Z%.
+
+## 7. Statistical protocol (5 rounds, mean ± std)
+
+Single-run numbers are not publishable; every reported data point is the
+aggregate of **R = 5 independent rounds** (default; was 3 in the earlier
+protocol) under identical traffic. Per round one JSON is produced with a
+fixed naming scheme:
+
+| Path | Script (on the board) | Per-round files |
+|---|---|---|
+| mmap, num_eq scan | `run_scan_num_eq.sh [rounds] [dur] [outdir]` | `mmap_ne<ne>_r<N>.json` for `ne ∈ {0,2,4,8}` |
+| mmap, single config | `run_repeats.sh <tag> <num_eq> [rounds] [dur] [outdir]` | `mmap_<tag>_r<N>.json` |
+| baseline (side_ch) | `run_repeat_baseline.sh [rounds] [dur] [outdir]` | `baseline_r<N>.json` |
+
+Aggregation (board or dev machine, stdlib only):
+
+```bash
+python3 summarize_runs.py --dir <outdir>     # -> summary_mean_std.json + .csv
+python3 scripts/plot_num_eq_scan.py --summary <outdir>/summary_mean_std.json
+```
+
+- Metrics aggregated per group: frame rate, CPU%, loss, jitter p50/p95.
+- `std` is the sample standard deviation (n−1); reported as `mean ± std`.
+- **Suspect-round rule:** a round whose frame rate is < 50% of its group
+  median is flagged (`suspect_rounds` in the summary) — this is the known
+  Redmi iperf3 stall (client stops transmitting mid-run). Re-run flagged
+  rounds before publishing; do not silently average dead rounds in.
+- Preconditions enforced by the scripts: driver mutual exclusion
+  (`csi_dma.ko` XOR `side_ch.ko`), `auto_start=0`, and a traffic pilot
+  (5 s probe; aborts if < `MIN_FPS`=200 fps unless `FORCE=1`) so a 20-minute
+  scan is never wasted on an idle channel.
+
+## 8. num_eq gradient scan (capture overhead vs frame size)
+
+Purpose: show the zero-copy path's cost **scales gracefully with the CSI
+frame size**. `num_eq` appends `num_eq × 52` equalizer symbols to each frame
+→ 464 / 1296 / 2128 / 3792 bytes for `num_eq ∈ {0,2,4,8}`. Zero new code:
+`csi_bench -n` sets it per run and the driver forwards it to the FPGA
+(`SIDE_CH_REG_NUM_EQ`).
+
+Protocol: fixed uplink traffic (same rate for **all** points — the comparison
+is across frame size at constant offered load), AP up, `csi_dma.ko` loaded
+(`auto_start=0`):
+
+```bash
+# client: iperf3 -c 192.168.13.1 -u -b 12M -l 1400 -t <rounds*60*4+60>
+./run_scan_num_eq.sh                 # 4 points × 5 rounds × 60 s ≈ 21 min
+```
+
+Expected shape: mmap CPU% stays low and grows only mildly with frame bytes
+(no per-frame copy exists to multiply); frame rate is statistically flat
+across points. The `ne=8` group doubles as the mmap side of the headline
+comparison — the baseline repeats (`run_repeat_baseline.sh`) must run under
+the *same* traffic, board state and CFO offset.
+
+## 9. Fixed-rate sweep (paper Fig. 3(a): capture CPU% vs offered load)
+
+Purpose: the Fig. 3(a) deliverable — capture CPU% (and delivered frame rate as
+sanity) at several *fixed* offered uplink rates, for BOTH paths. Uplink only
+(CSI frames come from RX at the AP). Uses the dedicated board script
+`run_sweep_fixed_rate.sh <rate_mbps> [mmap|baseline] [rounds] [dur] [outdir]`,
+which runs a 5 s traffic pilot (aborts below `MIN_FPS` unless `FORCE=1`,
+default threshold ≈ rate×44 fps) then `R` rounds, writing
+`sweep_{mmap,base}_<rate>mbps_r<N>.json` into ONE shared outdir.
+
+Protocol (3 rounds × 60 s per point per path by default):
+
+```bash
+# --- mmap path first (csi_dma.ko already loaded by bench_up.sh) ---
+for R in 1 5 10 20; do
+    # client (X230): iperf3 -c 192.168.13.1 -u -b ${R}M -l 1400 -t 260
+    ./run_sweep_fixed_rate.sh $R mmap
+done
+# --- switch drivers (mutually exclusive), then baseline path ---
+rmmod csi_dma && insmod side_ch.ko
+for R in 1 5 10 20; do
+    # client: iperf3 -c 192.168.13.1 -u -b ${R}M -l 1400 -t 260
+    ./run_sweep_fixed_rate.sh $R baseline
+done
+# --- aggregate + figure ---
+python3 summarize_runs.py --dir sweep
+python3 scripts/plot_sweep.py --summary sweep/summary_mean_std.json --outdir docs/figures
+```
+
+Notes:
+- iperf3 must cover the pilot + all rounds of one point (~230 s); start it
+  BEFORE running the script for that rate.
+- The 1 Mbit/s point yields only ~90 fps of CSI (beacons add a small floor);
+  the rate-scaled `MIN_FPS` avoids false aborts at low rates.
+- `summarize_runs.py` groups by filename (`sweep_mmap_<rate>mbps` /
+  `sweep_base_<rate>mbps`) and exposes the `sweep` view; `plot_sweep.py`
+  renders `sweep_cpu_vs_rate` (Fig. 3(a)) plus `sweep_fps` (sanity).
+- A load0/idle-floor point (no iperf) can be taken with `FORCE=1` if needed;
+  by default the pilot check aborts idle points.

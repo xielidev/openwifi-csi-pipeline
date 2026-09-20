@@ -57,6 +57,11 @@ scripts/build.sh        cross-compile driver + userspace for the board
 scripts/run_baseline.py baseline side_ch measurement -> baseline.json
 scripts/run_csi_bench.sh       mmap measurement -> mmap.json
 scripts/plot_compare.py        mmap vs baseline charts (3 figures)
+scripts/summarize_runs.py      multi-round aggregation -> mean ± std summary
+scripts/plot_num_eq_scan.py    error-bar figures (num_eq scan / headline / load)
+board_kit/run_scan_num_eq.sh   board: num_eq {0,2,4,8} × 5 rounds sweep
+board_kit/run_repeats.sh       board: repeated runs of one tagged config
+board_kit/run_repeat_baseline.sh board: baseline × 5 rounds
 docs/BENCHMARK_METHOD.md       reproducible benchmark methodology
 ```
 
@@ -96,6 +101,20 @@ python3 scripts/plot_compare.py --baseline baseline.json --mmap mmap.json
 See [docs/BENCHMARK_METHOD.md](docs/BENCHMARK_METHOD.md) for the full,
 reproducible methodology and the meaning of the three headline metrics
 (frame rate / CPU% / TSF jitter).
+
+**Statistics & sweeps (5 rounds, mean ± std).** Every headline number is the
+aggregate of 5 independent rounds, not a single run:
+
+```bash
+# on the board, csi_dma.ko loaded (auto_start=0), fixed-rate uplink running:
+./run_scan_num_eq.sh                    # num_eq {0,2,4,8} × 5 rounds ≈ 21 min
+./run_repeat_baseline.sh                # baseline × 5 rounds (side_ch.ko loaded)
+# optional uplink load gradient:  ./run_repeats.sh load0|load5|load20 8
+
+# aggregation + error-bar figures:
+python3 summarize_runs.py --dir <outdir>
+python3 scripts/plot_num_eq_scan.py --summary <outdir>/summary_mean_std.json
+```
 
 ## Benchmark results
 

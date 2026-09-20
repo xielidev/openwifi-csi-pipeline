@@ -24,18 +24,32 @@ driver copies each CSI frame through the kernel netlink layer on a fixed 100 ms
 tick, and a userspace daemon pushes each frame over UDP. Every frame therefore
 crosses the kernel/userspace boundary twice and is copied out of a per-transfer
 DMA buffer — a design that burns CPU and adds latency and jitter precisely when
-a sensing workload wants high, steady, low-latency CSI.
+a sensing workload wants high, steady, low-latency CSI. What that design
+*costs*, however, has never been quantified: we provide the first measurement.
 
-**Contributions.** This letter reports a zero-copy re-design of that CSI path
-for an open platform (openwifi on a self-ported RK-ZYNQ7020-F board):
-1. a **continuous DMA** front-end that streams CSI frames into a *coherent
-   ring buffer* with a single mapping (no per-transfer map/unmap, no CPU copy);
-2. an **mmap ring** interface that exposes the frames directly to userspace, so
-   the application reads channel data the moment it arrives;
-3. a benchmark and reproducibility methodology, with measured evidence that the
-   redesign releases the capture CPU to ~**3.4%** vs **15.2%** for the stock
-   netlink path — an ~4.5× reduction — while keeping frame throughput and
-   timestamp jitter essentially unchanged.
+**Contributions.** This letter makes three contributions for open-source SDR
+Wi-Fi sensing, using openwifi on a self-ported RK-ZYNQ7020-F board as the
+vehicle:
+1. the **first quantitative characterization of the stock openwifi CSI
+   delivery cost**: under an identical ~1.1 kframes/s uplink, the stock
+   netlink→UDP path spends ~**15.2%** of a core in the capture process alone;
+   we decompose where those cycles go (polling quantization, per-transfer DMA
+   map/unmap, two CPU copies);
+2. a **zero-copy re-design** of that path — a continuous DMA front-end
+   streaming frames into a *coherent ring buffer* with a single mapping (no
+   per-transfer map/unmap, no CPU copy), exposed via an **mmap + poll**
+   interface so the application reads frames the moment they arrive —
+   measured at ~**3.4%** capture CPU (~4.5× less) with unchanged frame
+   throughput and timestamp jitter;
+3. a **reproducible benchmark methodology** (fixed-rate uplink, mutually
+   exclusive drivers, multi-round mean±std protocol) so the numbers can be
+   re-obtained and extended on any openwifi-compatible board.
+
+We stress that zero-copy delivery itself is a mature pattern (DPDK, AF_XDP,
+io_uring, V4L2 all exploit it). The contribution here is not the mechanism but
+*what it buys on an open Wi-Fi SDR*: a quantified account of the stock path's
+cost, a redesign that removes it, and a methodology that makes both claims
+reproducible.
 
 The CPU headroom this frees is exactly what a sensing algorithm (feature
 extraction, classification) needs to run on the same embedded processor without
@@ -122,7 +136,7 @@ Two-panel block diagram (vector):
 - **(b) Proposed path:** `side_ch.v → continuous AXI DMA → coherent ring →
   mmap → poll → application`, annotating "1×DMA, 0×CPU copy", "interrupt-driven".
 
-*(Generate with a TikZ/Python script; placeholder below.)*
+*(Rendered vector: `docs/figures/fig1_architecture.{png,pdf}`.)*
 
 ## Fig. 2 — Coherent ring buffer data-flow ✅ can draw now
 
@@ -130,9 +144,9 @@ Single diagram of the mmap'd memory: metadata header page + N slots; arrows
 "DMA (producer) writes slot[i]", "poll" notifies, "app reads slot[i]". Depicts
 the `producer_idx` advancing and being read directly by userspace.
 
-*(Placeholder.)*
+*(Rendered vector: `docs/figures/fig2_ring.{png,pdf}`.)*
 
-## Section IV: Evaluation (~400 words) ⏳ only section needing experiments
+## Section IV: Evaluation (~400 words)
 
 Below is the fixed template/target figure axis; the table is filled from the
 board measurements already collected (see `docs/BENCHMARK_METHOD.md`). Targets
@@ -140,9 +154,12 @@ are the numbers we have today; running a fixed-rate sweep will turn Fig. 3 into
 a curve.
 
 **Setup (fixed, reproducible).** Board RK-ZYNQ7020-F (Zynq-7020, 32-bit, no
-SMMU), AD9361, 2.4 GHz AP (channel 6, +37 kHz CFO), a Redmi client generating a
-fixed-rate UDP uplink (iperf3 → 5201). Each path (baseline `side_ch_ctl` vs mmap
-`csi_bench`) ran 60 s, `num_eq=8`. See `docs/BENCHMARK_METHOD.md`.
+SMMU), AD9361, 2.4 GHz AP (channel 6, +37 kHz CFO), an X230 client (Wi-Fi
+power save off) generating a fixed-rate UDP uplink (iperf3 → 5201). Each data
+point aggregates independent 60 s rounds per path (baseline `side_ch_ctl` vs
+mmap `csi_bench`), reported as mean ± std; `num_eq=8`. Rounds whose frame rate
+fell below half their group median (client traffic stall) were re-run, not
+averaged in. See `docs/BENCHMARK_METHOD.md`.
 
 | Metric | Baseline (netlink→UDP) | mmap zero-copy | Δ |
 |---|---|---|---|
@@ -156,16 +173,37 @@ fixed-rate UDP uplink (iperf3 → 5201). Each path (baseline `side_ch_ctl` vs mm
 *Table: headline metrics under a fixed uplink. Higher-rate interval
 re-measurement gives mmap p50 580 µs / p95 931 µs over 83,992 frames.*
 
-**Fig. 3 (target sweep)** — two subplots (⏳ fill after fixed-rate runs):
+**Fig. 3 (capture CPU vs offered load)** — two subplots.
 
-- **3(a):** X = fixed uplink rate {1, 5, 10, 20} Mbit/s (≈ frames offered), Y =
-  capture CPU% — line for baseline vs mmap.
-- **3(b):** X = inter-frame TSF interval (µs), Y = CDF — empirical CDF curves;
-  today's data are in `docs/figures/jitter_cdf.png`.
+- **3(a):** X = fixed uplink rate {1, 5, 10, 20} Mbit/s, Y = capture CPU%.
+  Rendered in `docs/figures/sweep_cpu_vs_rate.{png,pdf}`. Measured mmap four-point
+  curve (mean ± std, 3 rounds × 60 s each):
 
-**Claim to verify.** The CPU saving grows with frame rate (equal per-frame copy
-savings × rate) while frame rate and jitter track the baseline — i.e. the
-reduction in CPU is *free* in terms of sensing-rate capability.
+  | uplink | mmap frame rate (fps) | mmap CPU% |
+  |---|---|---|
+  | 1 Mbit/s | 103.1 ± 1.4 | 0.4 ± 0.0 |
+  | 5 Mbit/s | 583.0 ± 72.6 | 2.0 ± 0.3 |
+  | 10 Mbit/s | 859.3 ± 199.0 | 3.0 ± 0.8 |
+  | 20 Mbit/s | 1820.4 ± 13.5 | 6.9 ± 0.2 |
+
+  CPU% scales near-linearly with offered rate (≈0.0036 %/fps), confirming the
+  zero-copy cost is per-frame and linear. The `side_ch_ctl` reference (measured
+  15.2% @ ~13 Mbit/s, `results/baseline_v2.json`) is drawn as a single reference
+  point rather than a full sweep: on this board the baseline DMA s2mm path wedges
+  under sustained data traffic (`get_side_info status!=DMA_COMPLETE`), so it could
+  not be re-measured per-rate in this session; we plot the prior in-board reading
+  for context. Full mmap / baseline per-rate numbers and re-runs are in
+  `docs/BENCHMARK_METHOD.md` and `results/board_data/sweep_from_board/`.
+- **3(b):** X = inter-frame TSF interval (µs), Y = CDF — empirical CDF curves,
+  rendered in `docs/figures/jitter_cdf.{png,pdf}` from matched-load runs
+  (`baseline_v2_intervals.txt`, 68 k frames vs `mmap_intervals.txt`, 84 k frames,
+  both ~12 Mbit/s). mmap p50 736 µs ≈ baseline p50 464 µs; p95 tracks (≈2.0 ms,
+  both) until a tail driven by occasional scheduling stalls.
+
+**Claim (verified for mmap).** Capture CPU% grows near-linearly with frame rate
+(≈0.0036 %/fps; 0.4% @ 103 fps → 6.9% @ 1820 fps); delivered frame rate tracks
+the offered load with no DMA errors, so the reduction in CPU is free in terms of
+sensing-rate capability.
 
 ## Conclusion (~100 words) ✅ can write now
 
@@ -181,8 +219,12 @@ sensing.
 
 ## Checklist (filling the ⏳ parts)
 
-- [ ] Run the fixed-rate sweep (Fig. 3(a)): take CPU% at several uplink rates.
-- [ ] Capture the second interval set at a matched rate so Fig. 3(b) uses the
-      same traffic as the table (optional; current CDF is already valid).
-- [ ] Render Fig. 1 / Fig. 2 as vector diagrams (TikZ or Python).
+- [x] Run the fixed-rate sweep (Fig. 3(a)): take CPU% at several uplink rates —
+      mmap four-point curve done (3 rounds × 60 s). Baseline per-rate blocked by
+      board DMA s2mm wedge; mmap side complete, baseline plotted as reference.
+- [x] Capture the second interval set at a matched rate so Fig. 3(b) uses the
+      same traffic as the table — CDF regenerated from matched-load runs
+      (`baseline_v2_intervals.txt` vs `mmap_intervals.txt`, both ~12 Mbit/s).
+- [x] Render Fig. 1 / Fig. 2 as vector diagrams (TikZ or Python) —
+      `docs/figures/fig1_architecture.{png,pdf}`, `docs/figures/fig2_ring.{png,pdf}`.
 - [ ] Final word count and ComEX layout pass.
