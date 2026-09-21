@@ -19,9 +19,15 @@ __pycache__/
 # data files tracked explicitly in results/ (kept out of general ignore)
 # keep benchmark JSON + figures versioned for reproducibility
 *.json
-*.png
+*.bin
+*.aux
+*.out
+*.toc
+*.log
+__pycache__/
 !docs/figures/*.png
 !results/board_data/*.json
+!results/board_data/sweep_full/*.json
 !results/board_data/sweep_full_zc/*.json
 !results/*.json
 

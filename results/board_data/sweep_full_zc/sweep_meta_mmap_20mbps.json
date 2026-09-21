@@ -1,0 +1,12 @@
+{
+  "experiment": "fixed-rate sweep point (paper Fig. 3a)",
+  "date": "2026-09-21T13:47:31+01:00",
+  "board": "analog",
+  "kernel": "5.15.36-27111-gc2f371e014f0-dirty",
+  "kind": "mmap",
+  "rate_mbps": 20,
+  "rounds": 3,
+  "duration_s": 60,
+  "min_fps": 880,
+  "pilot_fps": 1968.8
+}

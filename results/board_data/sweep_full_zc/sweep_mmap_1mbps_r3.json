@@ -1,0 +1,12 @@
+{
+  "mode": "mmap",
+  "duration_s": 60.04,
+  "num_eq": 8,
+  "total_frames": 6525,
+  "frame_rate_hz": 108.7,
+  "loss_percent": 0.00,
+  "tsf_loss_est_percent": 96.45,
+  "cpu_percent": 1.44,
+  "dma_err_count": 0,
+  "jitter_us": {"mean": 9610.4, "std": 42670.2, "p50": 341.0, "p95": 90286.0}
+}

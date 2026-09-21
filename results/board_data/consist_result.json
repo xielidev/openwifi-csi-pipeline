@@ -1,0 +1,10 @@
+{
+  "frames": 500,
+  "tsf_violations_baseline": 0,
+  "tsf_violations_mmap": 8,
+  "tsf_dup_mmap": 4,
+  "tsf_torn_mmap": 0,
+  "amp_corr_mean_vector": 1.0,
+  "amp_corr_per_frame_mean": 0.9975,
+  "verdict": "PASS"
+}

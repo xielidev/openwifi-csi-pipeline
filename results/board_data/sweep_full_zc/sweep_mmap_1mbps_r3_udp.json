@@ -1,0 +1,15 @@
+{
+  "mode": "udp_baseline",
+  "duration_s": 60.02,
+  "num_eq": 8,
+  "total_frames": 6469,
+  "frame_rate_hz": 107.8,
+  "loss_percent": 0.0,
+  "tsf_loss_est_percent": 96.29,
+  "jitter_us": {
+    "mean": 9198.5,
+    "std": 26663.6,
+    "p50": 341,
+    "p95": 90286
+  }
+}

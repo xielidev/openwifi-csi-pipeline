@@ -62,7 +62,7 @@ arrow(ax, 3.45, 1.7, 4.05, 1.7)
 arrow(ax, 5.3, 1.7, 5.9, 1.7, "copy #1")
 arrow(ax, 7.2, 1.7, 7.75, 1.7, "copy #2 / upcall")
 # poll tick annotation
-ax.text(6.5, 1.15, "poll every ~100 ms  ·  CPU copy ×2  ·  per-frame map/unmap",
+ax.text(6.5, 1.15, "poll every ~1 ms  ·  CPU copy ×2  ·  per-frame map/unmap",
         ha="center", fontsize=8, color="#a54a8b")
 
 # Panel (b) proposed

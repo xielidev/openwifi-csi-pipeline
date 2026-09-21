@@ -1,0 +1,465 @@
+{
+  "groups": {
+    "sweep_mmap_10mbps": {
+      "n": 3,
+      "rounds_files": [
+        "sweep_mmap_10mbps_r1.json",
+        "sweep_mmap_10mbps_r2.json",
+        "sweep_mmap_10mbps_r3.json"
+      ],
+      "num_eq": 8,
+      "dma_err_count": 0,
+      "metrics": {
+        "frame_rate_hz": {
+          "n": 3,
+          "rounds": [
+            991.8,
+            860.4,
+            657.7
+          ],
+          "mean": 836.633,
+          "std": 168.313
+        },
+        "cpu_percent": {
+          "n": 3,
+          "rounds": [
+            11.36,
+            9.91,
+            7.53
+          ],
+          "mean": 9.6,
+          "std": 1.934
+        },
+        "loss_percent": {
+          "n": 3,
+          "rounds": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "tsf_loss_est_percent": {
+          "n": 3,
+          "rounds": [
+            100.0,
+            100.0,
+            100.0
+          ],
+          "mean": 100.0,
+          "std": 0.0
+        },
+        "jitter_p50_us": {
+          "n": 3,
+          "rounds": [
+            341.0,
+            341.0,
+            341.0
+          ],
+          "mean": 341.0,
+          "std": 0.0
+        },
+        "jitter_p95_us": {
+          "n": 3,
+          "rounds": [
+            564.0,
+            668.0,
+            570.0
+          ],
+          "mean": 600.667,
+          "std": 58.389
+        },
+        "total_frames": {
+          "n": 3,
+          "rounds": [
+            59559,
+            51629,
+            39485
+          ],
+          "mean": 50224.333,
+          "std": 10110.449
+        },
+        "duration_s": {
+          "n": 3,
+          "rounds": [
+            60.05,
+            60.0,
+            60.04
+          ],
+          "mean": 60.03,
+          "std": 0.026
+        }
+      },
+      "suspect_rounds": []
+    },
+    "sweep_mmap_1mbps": {
+      "n": 3,
+      "rounds_files": [
+        "sweep_mmap_1mbps_r1.json",
+        "sweep_mmap_1mbps_r2.json",
+        "sweep_mmap_1mbps_r3.json"
+      ],
+      "num_eq": 8,
+      "dma_err_count": 0,
+      "metrics": {
+        "frame_rate_hz": {
+          "n": 3,
+          "rounds": [
+            117.4,
+            108.6,
+            108.7
+          ],
+          "mean": 111.567,
+          "std": 5.052
+        },
+        "cpu_percent": {
+          "n": 3,
+          "rounds": [
+            1.58,
+            1.45,
+            1.44
+          ],
+          "mean": 1.49,
+          "std": 0.078
+        },
+        "loss_percent": {
+          "n": 3,
+          "rounds": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "tsf_loss_est_percent": {
+          "n": 3,
+          "rounds": [
+            96.05,
+            96.45,
+            96.45
+          ],
+          "mean": 96.317,
+          "std": 0.231
+        },
+        "jitter_p50_us": {
+          "n": 3,
+          "rounds": [
+            341.0,
+            341.0,
+            341.0
+          ],
+          "mean": 341.0,
+          "std": 0.0
+        },
+        "jitter_p95_us": {
+          "n": 3,
+          "rounds": [
+            86807.0,
+            90239.0,
+            90286.0
+          ],
+          "mean": 89110.667,
+          "std": 1995.172
+        },
+        "total_frames": {
+          "n": 3,
+          "rounds": [
+            7044,
+            6523,
+            6525
+          ],
+          "mean": 6697.333,
+          "std": 300.224
+        },
+        "duration_s": {
+          "n": 3,
+          "rounds": [
+            60.02,
+            60.06,
+            60.04
+          ],
+          "mean": 60.04,
+          "std": 0.02
+        }
+      },
+      "suspect_rounds": []
+    },
+    "sweep_mmap_20mbps": {
+      "n": 3,
+      "rounds_files": [
+        "sweep_mmap_20mbps_r1.json",
+        "sweep_mmap_20mbps_r2.json",
+        "sweep_mmap_20mbps_r3.json"
+      ],
+      "num_eq": 8,
+      "dma_err_count": 0,
+      "metrics": {
+        "frame_rate_hz": {
+          "n": 3,
+          "rounds": [
+            2076.9,
+            2117.5,
+            2058.5
+          ],
+          "mean": 2084.3,
+          "std": 30.188
+        },
+        "cpu_percent": {
+          "n": 3,
+          "rounds": [
+            23.72,
+            24.02,
+            23.0
+          ],
+          "mean": 23.58,
+          "std": 0.524
+        },
+        "loss_percent": {
+          "n": 3,
+          "rounds": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "tsf_loss_est_percent": {
+          "n": 3,
+          "rounds": [
+            100.0,
+            100.0,
+            100.0
+          ],
+          "mean": 100.0,
+          "std": 0.0
+        },
+        "jitter_p50_us": {
+          "n": 3,
+          "rounds": [
+            341.0,
+            342.0,
+            341.0
+          ],
+          "mean": 341.333,
+          "std": 0.577
+        },
+        "jitter_p95_us": {
+          "n": 3,
+          "rounds": [
+            579.0,
+            579.0,
+            543.0
+          ],
+          "mean": 567.0,
+          "std": 20.785
+        },
+        "total_frames": {
+          "n": 3,
+          "rounds": [
+            124617,
+            127052,
+            123535
+          ],
+          "mean": 125068.0,
+          "std": 1801.353
+        },
+        "duration_s": {
+          "n": 3,
+          "rounds": [
+            60.0,
+            60.0,
+            60.01
+          ],
+          "mean": 60.003,
+          "std": 0.006
+        }
+      },
+      "suspect_rounds": []
+    },
+    "sweep_mmap_5mbps": {
+      "n": 3,
+      "rounds_files": [
+        "sweep_mmap_5mbps_r1.json",
+        "sweep_mmap_5mbps_r2.json",
+        "sweep_mmap_5mbps_r3.json"
+      ],
+      "num_eq": 8,
+      "dma_err_count": 0,
+      "metrics": {
+        "frame_rate_hz": {
+          "n": 3,
+          "rounds": [
+            520.7,
+            512.3,
+            515.7
+          ],
+          "mean": 516.233,
+          "std": 4.225
+        },
+        "cpu_percent": {
+          "n": 3,
+          "rounds": [
+            6.15,
+            6.11,
+            6.12
+          ],
+          "mean": 6.127,
+          "std": 0.021
+        },
+        "loss_percent": {
+          "n": 3,
+          "rounds": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "tsf_loss_est_percent": {
+          "n": 3,
+          "rounds": [
+            100.0,
+            100.0,
+            100.0
+          ],
+          "mean": 100.0,
+          "std": 0.0
+        },
+        "jitter_p50_us": {
+          "n": 3,
+          "rounds": [
+            341.0,
+            341.0,
+            341.0
+          ],
+          "mean": 341.0,
+          "std": 0.0
+        },
+        "jitter_p95_us": {
+          "n": 3,
+          "rounds": [
+            587.0,
+            579.0,
+            587.0
+          ],
+          "mean": 584.333,
+          "std": 4.619
+        },
+        "total_frames": {
+          "n": 3,
+          "rounds": [
+            31273,
+            30760,
+            30956
+          ],
+          "mean": 30996.333,
+          "std": 258.867
+        },
+        "duration_s": {
+          "n": 3,
+          "rounds": [
+            60.06,
+            60.04,
+            60.03
+          ],
+          "mean": 60.043,
+          "std": 0.015
+        }
+      },
+      "suspect_rounds": []
+    }
+  },
+  "num_eq_scan": null,
+  "load_gradient": null,
+  "sweep": {
+    "mmap": {
+      "tags": [
+        "sweep_mmap_1mbps",
+        "sweep_mmap_5mbps",
+        "sweep_mmap_10mbps",
+        "sweep_mmap_20mbps"
+      ],
+      "x": [
+        1,
+        5,
+        10,
+        20
+      ],
+      "frame_rate_hz": {
+        "mean": [
+          111.567,
+          516.233,
+          836.633,
+          2084.3
+        ],
+        "std": [
+          5.052,
+          4.225,
+          168.313,
+          30.188
+        ]
+      },
+      "cpu_percent": {
+        "mean": [
+          1.49,
+          6.127,
+          9.6,
+          23.58
+        ],
+        "std": [
+          0.078,
+          0.021,
+          1.934,
+          0.524
+        ]
+      },
+      "jitter_p50_us": {
+        "mean": [
+          341.0,
+          341.0,
+          341.0,
+          341.333
+        ],
+        "std": [
+          0.0,
+          0.0,
+          0.0,
+          0.577
+        ]
+      },
+      "jitter_p95_us": {
+        "mean": [
+          89110.667,
+          584.333,
+          600.667,
+          567.0
+        ],
+        "std": [
+          1995.172,
+          4.619,
+          58.389,
+          20.785
+        ]
+      },
+      "loss_percent": {
+        "mean": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "std": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "baseline": null
+  }
+}
