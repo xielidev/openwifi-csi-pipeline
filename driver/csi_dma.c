@@ -174,7 +174,11 @@ static int csi_dma_transfer(struct csi_dma_dev *dev)
 		dev->dma_err_count++;
 		dev_err(dev->dev, "%s: DMA timeout (no data or stuck)\n",
 			__func__);
-		dmaengine_terminate_all(dev->chan);
+		/* Do NOT call dmaengine_terminate_all() here: the S2MM channel
+		 * shares the DMA engine with the openwifi TX (MM2S) path, and
+		 * terminating it kills the sdr TX DMA (every subsequent beacon
+		 * reports status!=DMA_COMPLETE and the SSID disappears).  Same
+		 * constraint as side_ch.c, see its dev_remove comment. */
 		return -ETIMEDOUT;
 	}
 
@@ -454,13 +458,17 @@ static int csi_dma_remove(struct platform_device *pdev)
 
 	misc_deregister(&cdev->misc);
 
-	if (cdev->chan)
-		dmaengine_terminate_all(cdev->chan);
+	if (cdev->chan) {
+		/* Do NOT dmaengine_terminate_all() here: it also terminates the
+		 * openwifi TX DMA (shared engine) and leaves the AP unable to
+		 * send beacons after this module is unloaded.  Mirror side_ch's
+		 * dev_remove, which only releases the channel. */
+		dma_release_channel(cdev->chan);
+	}
+
 	if (cdev->meta)
 		dma_free_coherent(&pdev->dev, cdev->dma_buf_size,
 				  cdev->meta, cdev->ring_dma);
-	if (cdev->chan)
-		dma_release_channel(cdev->chan);
 
 	dev_info(&pdev->dev, "%s: removed\n", CSI_DRV_NAME);
 	return 0;

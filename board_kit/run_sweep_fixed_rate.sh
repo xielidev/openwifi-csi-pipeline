@@ -83,12 +83,35 @@ if [ "$KIND" = "mmap" ]; then
     AUTO=$(cat /sys/module/csi_dma/parameters/auto_start 2>/dev/null || echo '?')
     [ "$AUTO" = "0" ] \
         || echo "WARNING: csi_dma auto_start=$AUTO (expected 0; auto_start=1 disturbs TX beacons)"
-    run_point() { # json dur
-        "$BENCH" -d "$2" -n 8 -j "$1"
-    }
-    run_pilot() { # json
-        "$BENCH" -d 5 -n 8 -j "$1"
-    }
+    # Same data exit as baseline: forward frames over UDP to the loopback
+    # receiver (192.168.10.1:4000) so the only difference vs baseline is the
+    # eliminated driver->user copy, not the whole UDP leg.
+    UDP_FWD=${UDP_FWD:-1}
+    if [ "$UDP_FWD" = "1" ]; then
+        if [ -f "$SCRIPT_DIR/csi_udp_recv.py" ]; then
+            RECV_PY="$SCRIPT_DIR/csi_udp_recv.py"
+        else
+            RECV_PY="$SCRIPT_DIR/../board_kit/csi_udp_recv.py"
+        fi
+        run_point() { # json dur
+            local recv_json="${1%.json}_udp.json"
+            python3 "$RECV_PY" --port 4000 --num-eq 8 --duration "$2" \
+                --json "$recv_json" >/dev/null 2>&1 &
+            local rpid=$!
+            "$BENCH" -d "$2" -n 8 -u 192.168.10.1 -j "$1"
+            wait $rpid
+        }
+        run_pilot() { # json
+            "$BENCH" -d 5 -n 8 -u 192.168.10.1 -j "$1"
+        }
+    else
+        run_point() { # json dur
+            "$BENCH" -d "$2" -n 8 -j "$1"
+        }
+        run_pilot() { # json
+            "$BENCH" -d 5 -n 8 -j "$1"
+        }
+    fi
 else
     if [ -x "$SCRIPT_DIR/run_baseline.py" ]; then
         RUN_BASELINE="$SCRIPT_DIR/run_baseline.py"
